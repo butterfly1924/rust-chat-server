@@ -26,5 +26,7 @@ async fn main() {
         }
 
         writer.write_all(&line.as_bytes()).await.unwrap();
+
+        line.clear();
     }
 }
