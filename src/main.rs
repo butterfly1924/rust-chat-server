@@ -1,5 +1,4 @@
 use tokio::net::TcpListener;
-use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::BufReader;
@@ -10,23 +9,27 @@ async fn main() {
 
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
     
-    let (mut socket, _addr) = listener.accept().await.unwrap();
-
-    let (reader, mut writer) = socket.split();
-
-    let mut bufreader = BufReader::new(reader);
-
-    let mut line = String::new();
-
-
     loop {
-        let bytes_reader = bufreader.read_line(&mut line).await.unwrap();
-        if bytes_reader == 0 {
-            break;
-        }
+        let (mut socket, _addr) = listener.accept().await.unwrap();
+        tokio::spawn(async move {
 
-        writer.write_all(&line.as_bytes()).await.unwrap();
+            let (reader, mut writer) = socket.split();
 
-        line.clear();
+            let mut bufreader = BufReader::new(reader);
+
+            let mut line = String::new();
+
+
+            loop {
+                let bytes_reader = bufreader.read_line(&mut line).await.unwrap();
+                if bytes_reader == 0 {
+                    break;
+                }
+
+                writer.write_all(&line.as_bytes()).await.unwrap();
+
+                line.clear();
+            }
+        });
     }
 }
